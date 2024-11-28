@@ -1,8 +1,13 @@
-def main():    
+import argparse
+
+from src.pipeline.parser_py import parse_repo
+
+def main(args):    
     # Step 1: Parse Python Repositories
     # - Load the target Python repositories.
     # - Use the `ast` module to parse each file and extract structural elements 
     #   like modules, classes, methods, and functions.
+    parse_repo(args.repo)
 
     # Step 2: Build the Graph
     # - Represent each code element as a node (module, class, method, function).
@@ -29,5 +34,11 @@ def main():
 
     pass  # Placeholder for implementation
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="HIERA: Hierarchical Information Extraction and Retrieval Augmentation")
+    parser.add_argument("--repo", type=str, required=True, help="Path or GitHub URL to the target Python repository")
+    return parser.parse_args()
+
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(args)
