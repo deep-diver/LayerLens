@@ -69,9 +69,6 @@ def _add_functions_to_graph(graph: nx.DiGraph, root_name: str):
         if os.path.isfile(file_path):
             graph = _add_function_to_graph(graph, parent_name, file_path)
 
-def _get_readable_labels(G: nx.DiGraph):
-    return {node: node.split(".")[-1] for node in G.nodes}
-
 def _parse_repo(path: str):
     root_name = path.split("/")[-1]
 
@@ -88,8 +85,11 @@ def build_graph(path: str, draw_graph: bool = True):
     G = _parse_repo(path)
 
     if draw_graph:
+        def _get_readable_labels(G: nx.DiGraph):
+            return {node: node.split(".")[-1] for node in G.nodes}
+
         plt.figure(figsize=(12, 8))
-        nx.draw(G, pos=nx.nx_pydot.graphviz_layout(G, prog="dot"), with_labels=True, labels=_get_readable_labels(G))
+        nx.draw(G, pos=nx.nx_pydot.graphviz_layout(G), with_labels=True, labels=_get_readable_labels(G))
         plt.savefig("graph.png")
 
     return G
