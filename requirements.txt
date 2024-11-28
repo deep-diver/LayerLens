@@ -2,4 +2,5 @@ genai-apis[gemini]
 genai-apis[opeani]
 genai-apis[anthropic]
 networkx[default]
+pydot
 GitPython

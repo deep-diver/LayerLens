@@ -1,18 +1,20 @@
 import argparse
 
 from src.pipeline.parser_py import parse_repo
+from src.pipeline.graph_builder_py import build_graph
 
 def main(args):    
     # Step 1: Parse Python Repositories
     # - Load the target Python repositories.
     # - Use the `ast` module to parse each file and extract structural elements 
     #   like modules, classes, methods, and functions.
-    parse_repo(args.repo)
+    path = parse_repo(args.repo)
 
     # Step 2: Build the Graph
     # - Represent each code element as a node (module, class, method, function).
     # - Create edges based on relationships (e.g., imports, inheritance, function calls, memberships).
     # - Use a graph library like NetworkX or store in a graph database like Neo4j.
+    graph = build_graph(path)
 
     # Step 3: Generate Natural Language Annotations (NLAs)
     # - For each node in the graph, generate descriptive annotations using an LLM.
