@@ -5,4 +5,17 @@ requirements.txt
 main.py
 
 .git
+.github
+.circleci
+.meta
+benchmark
+docker
+docs
+i18n
+model_cards
+notebooks
+templates
+tests
+scripts
+ext
 __init__.py

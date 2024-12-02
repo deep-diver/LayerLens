@@ -1,7 +1,11 @@
+import os
 import argparse
+
+import networkx as nx
 
 from src.pipeline.parser_py import parse_repo
 from src.pipeline.graph_builder_py import build_graph
+from src.pipeline.nla_generator_py import generate_nla
 
 def main(args):    
     # Step 1: Parse Python Repositories
@@ -14,11 +18,16 @@ def main(args):
     # - Represent each code element as a node (module, class, method, function).
     # - Create edges based on relationships (e.g., imports, inheritance, function calls, memberships).
     # - Use a graph library like NetworkX or store in a graph database like Neo4j.
-    graph = build_graph(path)
+    root_node, graph = build_graph(path)
+    if args.save_raw_graph:
+        nx.write_graphml(graph, f"{root_node}_raw.graphml")
 
     # Step 3: Generate Natural Language Annotations (NLAs)
     # - For each node in the graph, generate descriptive annotations using an LLM.
     # - Store annotations with the corresponding nodes in the graph.
+    graph = generate_nla(graph, root_node,args)
+    if args.save_nla_graph:
+        nx.write_graphml(graph, f"{root_node}_nla.graphml")
 
     # Step 4: Implement Retrieval Mechanism
     # - Process user queries to identify relevant parts of the graph.
@@ -38,7 +47,27 @@ def main(args):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="HIERA: Hierarchical Information Extraction and Retrieval Augmentation")
+    # parsing repo
     parser.add_argument("--repo", type=str, required=True, help="Path or GitHub URL to the target Python repository")
+
+    # building graph
+    parser.add_argument("--save-raw-graph", action="store_true", default=False, help="Save the graph to a file")
+    
+    # generating nla
+    parser.add_argument("--service-llm-provider", type=str, default="gemini",
+                        help="Which service LLM provider to choose")
+    parser.add_argument("--service-llm-api-key", type=str, default=os.getenv("SERVICE_LLM_API_KEY"),
+                        help="API KEY for selected service LLM. Credentials for GCP, AWS based LLM, "
+                        "use dedicated authentication CLI (ignore this option)")
+    parser.add_argument("--service-llm-gen-config-path", type=str, default="config/gemini_gen_configs.yaml")
+    parser.add_argument("--gcp-project-id", type=str, default=os.getenv("GCP_PROJECT_ID"))
+    parser.add_argument("--gcp-location", type=str, default=os.getenv("GCP_LOCATION"))
+    parser.add_argument("--aws-location", type=str, default=os.getenv("AWS_LOCATION"))    
+    parser.add_argument("--prompt-tmpl-path", type=str, 
+                        default=os.path.abspath("config/prompts.toml"),
+                        help="Path to the prompts TOML configuration file.")
+    parser.add_argument("--save-nla-graph", action="store_true", default=False, help="Save the graph to a file")
+
     return parser.parse_args()
 
 if __name__ == "__main__":

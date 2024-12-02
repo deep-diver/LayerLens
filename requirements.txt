@@ -3,4 +3,6 @@ genai-apis[opeani]
 genai-apis[anthropic]
 networkx[default]
 pydot
+pyyaml
+futures
 GitPython
