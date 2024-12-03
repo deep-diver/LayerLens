@@ -104,16 +104,10 @@ def _save_graph(graph, file_name):
     plt.figure(num=None, figsize=(30, 30), dpi=200)
     plt.axis('off')
     fig = plt.figure(1)
-    pos = nx.nx_pydot.graphviz_layout(graph, prog="fdp")
+    pos = nx.nx_pydot.graphviz_layout(graph, prog="neato")
     nx.draw_networkx_nodes(graph,pos)
     nx.draw_networkx_edges(graph,pos)
     nx.draw_networkx_labels(graph,pos, labels=__get_readable_labels(graph))
-
-    cut = 1.00
-    xmax = cut * max(xx for xx, yy in pos.values())
-    ymax = cut * max(yy for xx, yy in pos.values())
-    plt.xlim(0, xmax)
-    plt.ylim(0, ymax)
 
     plt.savefig(file_name,bbox_inches="tight")
     pylab.close()
@@ -123,7 +117,6 @@ def build_graph(path: str, draw_graph: bool = True):
     root_name, G = _parse_repo(path)
 
     if draw_graph:
-        print(G.nodes)
         _save_graph(G, "graph.png")
 
     return root_name, G

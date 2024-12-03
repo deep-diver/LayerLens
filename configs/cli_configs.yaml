@@ -1,0 +1,7 @@
+workers: 10
+save_graph_animation: true
+graph_animation_duration_per_step: 0.1
+
+prompt_tmpl_path: config/prompts.toml
+service_llm_provider: openai
+service_llm_gen_config_path: config/gpt_gen_configs.yaml
