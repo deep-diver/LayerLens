@@ -73,9 +73,9 @@ async def _nla_processings(graph, root_node, nodes, save_graph_animation=False, 
     semaphore = asyncio.Semaphore(workers)
     completed_tasks = 0
 
-    async def __non_leaf_worker(node):
+    async def __worker(node):
         nonlocal count, completed_tasks
-        async def ___process_non_leaf_node(graph, root, node):
+        async def ___node(graph, root, node):
             out_neighbors = list(graph.successors(node))
             # print(f"Processing node: {node}, out_neighbors: {out_neighbors}")
 
@@ -95,14 +95,14 @@ async def _nla_processings(graph, root_node, nodes, save_graph_animation=False, 
                 return node
         
         async with semaphore:
-            results = await ___process_non_leaf_node(graph, root_node, node)
+            results = await ___node(graph, root_node, node)
             completed_tasks += 1
-            if save_graph_animation:# and completed_tasks % workers == 0: 
+            if save_graph_animation and completed_tasks % workers == 0: 
                 count += 1
                 _display_progress(graph, f"{graph_imgs_path}/{root_node}/step_{count}.png")
             return results
 
-    nla_tasks = [__non_leaf_worker(node) for node in nodes]
+    nla_tasks = [__worker(node) for node in nodes]
     result_nodes = set(await asyncio.gather(*nla_tasks))
     return result_nodes, count
 
