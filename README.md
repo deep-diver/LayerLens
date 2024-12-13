@@ -1,6 +1,6 @@
-# HIERA
+# LayerLens
 
-HIERA (Hierarchical Information Extraction and Retrieval Augmentation) is a framework for better understanding of Python code repository with LLM-powered annotations and hierarchical tree-based retrieval.
+LayerLens is a framework for better understanding of Python code repository with LLM-powered annotations and hierarchical tree-based retrieval.
 
 ```bash
 $ sudo apt-get install graphviz # for Linux
