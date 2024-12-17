@@ -1,0 +1,17 @@
+[nla_generation]
+full_prompt = """Write a high level description of "$node" based on the following dependencies.
+It will be used as a look up description for searching relevant code snippets.
+It is not for human but for machine, hence it should be concise and precise.
+
+$dependencies
+"""
+
+source_sub_prompt = """raw source code of @$dependency_node:
+$content
+------------------------------------------
+"""
+
+nla_sub_prompt = """natural language description of @$dependency_node:
+$content
+------------------------------------------
+"""

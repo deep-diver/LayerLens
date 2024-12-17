@@ -1,7 +1,7 @@
 max_tokens: 4096
 temperature: 0.8
-schema:
-  CalendarEvent:
-    name: str
-    date: str
-    participants: list[str]
+# schema:
+#   CalendarEvent:
+#     name: str
+#     date: str
+#     participants: list[str]

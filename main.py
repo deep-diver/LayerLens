@@ -22,14 +22,14 @@ async def main(args):
     # - Use a graph library like NetworkX or store in a graph database like Neo4j.
     root_node, graph = build_graph(path)
     if args.save_raw_graph:
-        nx.write_graphml(graph, f"{root_node}_raw.graphml")
+        nx.write_graphml(graph, f"{root_node}_raw.graphml", named_key_ids=True)
 
     # Step 3: Generate Natural Language Annotations (NLAs)
     # - For each node in the graph, generate descriptive annotations using an LLM.
     # - Store annotations with the corresponding nodes in the graph.
     graph = await generate_nla(graph, root_node, args)
     if args.save_nla_graph:
-        nx.write_graphml(graph, f"{root_node}_nla.graphml")
+        nx.write_graphml(graph, f"{root_node}_nla.graphml", named_key_ids=True)
 
     # Step 4: Implement Retrieval Mechanism
     # - Process user queries to identify relevant parts of the graph.
@@ -58,16 +58,18 @@ def parse_args():
     # generating nla
     parser.add_argument("--service-llm-provider", type=str, default="gemini",
                         help="Which service LLM provider to choose")
+    parser.add_argument("--service-llm-model", type=str, default="gemini-1.5-flash-latest",
+                        help="Which service LLM model to choose")
     parser.add_argument("--service-llm-api-key", type=str, default=os.getenv("SERVICE_LLM_API_KEY"),
                         help="API KEY for selected service LLM. Credentials for GCP, AWS based LLM, "
                         "use dedicated authentication CLI (ignore this option)")
-    parser.add_argument("--service-llm-gen-config-path", type=str, default="config/gemini_gen_configs.yaml")
+    parser.add_argument("--service-llm-gen-config-path", type=str, default="configs/gemini_gen_configs.yaml")
     parser.add_argument("--gcp-project-id", type=str, default=os.getenv("GCP_PROJECT_ID"))
     parser.add_argument("--gcp-location", type=str, default=os.getenv("GCP_LOCATION"))
     parser.add_argument("--aws-location", type=str, default=os.getenv("AWS_LOCATION"))    
 
     parser.add_argument("--prompt-tmpl-path", type=str, 
-                        default=os.path.abspath("config/prompts.toml"),
+                        default=os.path.abspath("configs/prompts.toml"),
                         help="Path to the prompts TOML configuration file.")
     parser.add_argument("--workers", type=int, default=4, help="Number of workers to process the graph")
     parser.add_argument("--graph-imgs-path", type=str, default="graph_imgs", help="Path to save the graph images")

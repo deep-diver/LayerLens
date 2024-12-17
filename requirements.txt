@@ -1,7 +1,8 @@
 genai-apis[gemini]
-genai-apis[opeani]
+genai-apis[openai]
 genai-apis[anthropic]
 networkx[default]
+toml
 pydot
 pyyaml
 futures

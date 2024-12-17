@@ -1,16 +1,47 @@
 import os
 import glob
+import toml
 import yaml
 import imageio
 import asyncio
 import networkx as nx
 import matplotlib.pyplot as plt
+from string import Template
 from matplotlib import pylab
 
 from genai_apis import APIFactory
 from src.pipeline.utils import create_pydantic_class_from_yaml
 
-def _setup_service_llm(service_llm_gen_configs, args):
+prompt_tmpls = toml.load("configs/prompts.toml")
+
+async def _generate_nla(graph, node, out_neighbors, client, model, gen_configs):
+    dependencies = ""
+    for out_neighbor in out_neighbors:
+        if "source" in graph.nodes[out_neighbor]:
+            sub_prompt_tmpl = prompt_tmpls["nla_generation"]["source_sub_prompt"]
+            sub_prompt = Template(sub_prompt_tmpl).safe_substitute(
+                dependency_node=out_neighbor, content=graph.nodes[out_neighbor]["source"]
+            )
+            dependencies += sub_prompt
+        elif "nla" in graph.nodes[out_neighbor]:
+            sub_prompt_tmpl = prompt_tmpls["nla_generation"]["nla_sub_prompt"]
+            sub_prompt = Template(sub_prompt_tmpl).safe_substitute(
+                dependency_node=out_neighbor, content=graph.nodes[out_neighbor]["nla"]
+            )
+            dependencies += sub_prompt
+
+    prompt_tmpl = prompt_tmpls["nla_generation"]["full_prompt"]
+    prompt = Template(prompt_tmpl).safe_substitute(node=node, dependencies=dependencies)
+
+    print(prompt)
+
+    nla = await client.generate_text(
+        model, prompt=prompt, **gen_configs
+    )
+
+    return nla
+
+def _setup_service_llm(args):
     service_llm_kwargs = {
         "api_key": args.service_llm_api_key,
         "GCP_PROJECT_ID": args.gcp_project_id,
@@ -69,15 +100,23 @@ def _display_progress(graph, filename, seed=1):
     pylab.close()
     del fig
 
-async def _nla_processings(graph, root_node, nodes, save_graph_animation=False, graph_imgs_path=None, count=0, workers=4):
-    semaphore = asyncio.Semaphore(workers)
+async def _nla_processings(graph, root_node, nodes, args, count=0):
+    semaphore = asyncio.Semaphore(args.workers)
     completed_tasks = 0
 
     async def __worker(node):
         nonlocal count, completed_tasks
         async def ___node(graph, root, node):
-            out_neighbors = list(graph.successors(node))
             # print(f"Processing node: {node}, out_neighbors: {out_neighbors}")
+            # print(len(out_neighbors))
+            out_neighbors = list(graph.successors(node))
+            if len(out_neighbors) > 0:
+                print(1, node, len(out_neighbors))
+                graph.nodes[node]["nla"] = await _generate_nla(
+                    graph, node, out_neighbors, args.service_llm, args.service_llm_model, args.service_llm_gen_configs
+                )
+            else:
+                print(2, node, len(out_neighbors))
 
             if node != root:
                 graph.nodes[node]["processed"] = True
@@ -88,18 +127,18 @@ async def _nla_processings(graph, root_node, nodes, save_graph_animation=False, 
                     graph.nodes[parent_node]["children_to_be_processed"] = len(list(graph.successors(parent_node)))
                 
                 graph.nodes[parent_node]["children_to_be_processed"] -= 1
-
                 return parent_node
             else:
+                print(1)
                 graph.nodes[node]["processed"] = True
                 return node
         
         async with semaphore:
             results = await ___node(graph, root_node, node)
             completed_tasks += 1
-            if save_graph_animation and completed_tasks % workers == 0: 
+            if args.save_graph_animation and completed_tasks % args.workers == 0: 
                 count += 1
-                _display_progress(graph, f"{graph_imgs_path}/{root_node}/step_{count}.png")
+                _display_progress(graph, f"{args.graph_imgs_path}/{root_node}/step_{count}.png")
             return results
 
     nla_tasks = [__worker(node) for node in nodes]
@@ -123,12 +162,12 @@ async def _dynamic_traverse(graph, root_node, args):
     os.makedirs(f"{args.graph_imgs_path}/{root_node}", exist_ok=True)
     if args.save_graph_animation: _display_progress(graph, f"{args.graph_imgs_path}/{root_node}/step_{count}.png")
 
-    result_nodes, count = await _nla_processings(graph, root_node, leaf_nodes, args.save_graph_animation, args.graph_imgs_path, count, args.workers)
+    result_nodes, count = await _nla_processings(graph, root_node, leaf_nodes, args, count)
     remained_nodes = _get_remained_nodes(graph, root_node, result_nodes)
     if args.save_graph_animation: _display_progress(graph, f"{args.graph_imgs_path}/{root_node}/step_{count+1}.png")
 
     while remained_nodes:
-        result_nodes, count = await _nla_processings(graph, root_node, remained_nodes, args.save_graph_animation, args.graph_imgs_path, count+2, args.workers)
+        result_nodes, count = await _nla_processings(graph, root_node, remained_nodes, args, count+2)
         remained_nodes = _get_remained_nodes(graph, root_node, result_nodes)
 
     graph.nodes[root_node]["processed"] = True
@@ -137,7 +176,8 @@ async def _dynamic_traverse(graph, root_node, args):
     return graph
 
 async def generate_nla(graph, root_node, args):
-    # service_llm = _setup_service_llm(args)
+    service_llm, service_llm_gen_configs = _setup_service_llm(args)
+    args.service_llm, args.service_llm_gen_configs = service_llm, service_llm_gen_configs
     graph = await _dynamic_traverse(graph, root_node, args)
 
     if args.save_graph_animation:

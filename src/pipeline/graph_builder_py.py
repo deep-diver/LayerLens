@@ -86,6 +86,7 @@ def _add_objs_to_graph(graph: nx.DiGraph, root_name: str):
 
 def _parse_repo(path: str):
     root_name = path.split("/")[-1]
+    print(root_name)
 
     G = nx.DiGraph()    
 
