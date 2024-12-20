@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LayerLens Interactive Graph Generator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        .container {
+            width: 95%; 
+            margin: 30px auto;
+            padding: 30px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            color: #007BFF;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: box-shadow 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        textarea {
+            resize: vertical;
+            /* min-height: 150px; */
+            
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-right: 10px; /* Added spacing between buttons */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+        }
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+        }
+
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #007BFF;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        iframe {
+            border: 2px solid #ccc;
+            margin-top: 30px;
+            width: 100%; 
+            height: 70vh;
+            border-radius: 5px;
+        }
+
+        /* Styling for range sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s, box-shadow .2s;
+            border-radius: 5px;
+        }
+
+        input[type="range"]:hover {
+            opacity: 1;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007BFF;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007BFF;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Style for select dropdown */
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: white;
+            appearance: none; 
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="%23333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); 
+            background-repeat: no-repeat;
+            background-position-x: 98%;
+            background-position-y: center;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        select:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        /* Style for temperature output */
+        .temp-output {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #555;
+        }
+
+        /* Accordion styles */
+        /* Accordion styles */
+        .accordion {
+            background-color: #e7e7e7;
+            color: #444;
+            cursor: pointer;
+            padding: 15px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 16px;
+            transition: 0.4s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .accordion:hover,
+        .active {
+            background-color: #d4d4d4;
+        }
+
+        .accordion-content {
+            padding: 0 18px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            padding-top: 20px;
+        }
+
+        .accordion-summary {
+            font-size: 14px;
+            color: #777;
+        }
+
+        .form-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-top: 10px;
+        }
+
+        .form-group {
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .form-group:last-child {
+            margin-right: 0;
+        }
+        .button-container {
+            display: flex;
+            justify-content: left;
+            margin-bottom: 20px; 
+        }
+
+        /* Loading text styles */
+        #loading p {
+            font-size: 18px;
+            color: #555;
+            margin-top: 10px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LayerLens Interactive Graph Generator</h1>
+
+        <button class="accordion">
+            LLM Settings
+            <span id="accordion-summary" class="accordion-summary"></span>
+        </button>
+        <div class="accordion-content">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="service_llm_provider">Service provider</label>
+                    <select id="service_llm_provider" name="service_llm_provider">
+                        <option value="openai">OpenAI</option>
+                        <option value="google">Google</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="service_llm_model">Model</label>
+                    <select id="service_llm_model" name="service_llm_model">
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="max_tokens">Max Tokens</label>
+                    <input type="text" id="max_tokens" name="max_tokens" value="512">
+                </div>
+                <div class="form-group">
+                    <label for="temperature">Temperature <span id="temperature-value" class="temp-output">0.1</span></label>
+                    <input type="range" id="temperature" name="temperature" min="0" max="1" step="0.01" value="0.1">
+                </div>
+            </div>
+        </div>
+
+        <form id="pyvis-form">
+            <label for="repo_url">Repository URL</label>
+            <input type="text" id="repo_url" name="repo_url" placeholder="https://github.com/user/repo">
+
+            <label for="prompt">Prompt</label>
+            <textarea id="prompt" name="prompt" placeholder="Enter your prompt here..."></textarea>
+            <div class="button-container">
+                <button type="button" id="generate-graph">Generate Graph</button>
+                <button type="button" id="execute-prompt">Execute Prompt</button>
+            </div>
+        </form>
+
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Generating Graph...</p>
+        </div>
+        <iframe id="pyvis-output" src="requests_nla-pyvis.html">
+        </iframe>
+    </div>
+
+    <script>
+        const form = document.getElementById("pyvis-form");
+        const loading = document.getElementById("loading");
+        const pyvisOutput = document.getElementById("pyvis-output");
+        const llmProviderSelect = document.getElementById("service_llm_provider");
+        const llmModelSelect = document.getElementById("service_llm_model");
+        const generateGraphButton = document.getElementById("generate-graph");
+        const executePromptButton = document.getElementById("execute-prompt");
+
+        // Accordion functionality
+        const accordion = document.querySelector(".accordion");
+        const accordionContent = document.querySelector(".accordion-content");
+        const accordionSummary = document.getElementById("accordion-summary");
+
+        // LLM Provider/Model Presets
+        const llmPresets = {
+            openai: ["gpt-4o", "gpt-4o-mini", "gpt-4", "gpt-3.5-turbo"],
+            google: ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-2.0-flash"],
+        };
+
+        // Function to update LLM models based on the selected provider
+        function updateLLMModels() {
+            const selectedProvider = llmProviderSelect.value;
+            const models = llmPresets[selectedProvider] || [];
+
+            llmModelSelect.innerHTML = ""; // Clear existing options
+
+            for (const model of models) {
+                const option = document.createElement("option");
+                option.value = model;
+                option.text = model;
+                llmModelSelect.add(option);
+            }
+            updateAccordionSummary();
+        }
+
+        // Initial population of LLM models
+        updateLLMModels();
+
+        // Event listener for LLM provider change
+        llmProviderSelect.addEventListener("change", updateLLMModels);
+
+        // Accordion event listener
+        accordion.addEventListener("click", () => {
+            accordion.classList.toggle("active");
+            if (accordionContent.style.maxHeight) {
+                accordionContent.style.maxHeight = null;
+            } else {
+                accordionContent.style.maxHeight = accordionContent.scrollHeight + "px";
+            }
+            updateAccordionSummary();
+        });
+
+        // Function to update the accordion summary
+        function updateAccordionSummary() {
+            const provider = document.getElementById("service_llm_provider").value;
+            const model = document.getElementById("service_llm_model").value;
+            const maxTokens = document.getElementById("max_tokens").value;
+            const temperature = document.getElementById("temperature").value;
+
+            accordionSummary.textContent = `${provider}(${model}), max tokens: ${maxTokens}, temp: ${temperature}`;
+        }
+
+        // Update summary when settings change
+        document.getElementById("service_llm_provider").addEventListener("change", updateAccordionSummary);
+        document.getElementById("service_llm_model").addEventListener("change", updateAccordionSummary);
+        document.getElementById("max_tokens").addEventListener("change", updateAccordionSummary);
+        document.getElementById("temperature").addEventListener("input", updateAccordionSummary);
+
+        // Temperature slider update
+        const temperatureSlider = document.getElementById("temperature");
+        const temperatureValue = document.getElementById("temperature-value");
+        temperatureSlider.addEventListener("input", () => {
+            temperatureValue.textContent = temperatureSlider.value;
+        });
+
+        // Function to handle graph generation
+        async function handleGraphGeneration() {
+            loading.style.display = "block";
+            pyvisOutput.src = "";
+
+            const serviceLLMProvider = llmProviderSelect.value;
+            const serviceLLMModel = llmModelSelect.value;
+            const maxTokens = document.getElementById("max_tokens").value;
+            const temperature = temperatureSlider.value;
+            const repoURL = document.getElementById("repo_url").value;
+            const prompt = document.getElementById("prompt").value;
+
+            const queryParams = new URLSearchParams({
+                service_llm_provider: serviceLLMProvider,
+                service_llm_model: serviceLLMModel,
+                max_tokens: maxTokens,
+                temperature: temperature,
+                repo_url: repoURL,
+                prompt: prompt,
+                timestamp: Date.now()
+            });
+
+            pyvisOutput.src = `/generate?${queryParams.toString()}`;
+
+            pyvisOutput.addEventListener("load", () => {
+                loading.style.display = "none";
+            });
+        }
+
+        // Function to handle prompt execution
+        async function handlePromptExecution() {
+            loading.style.display = "block";
+            // Note: For prompt execution, we might need a different endpoint or a way to differentiate the request.
+            // Here, I'm reusing the same queryParams for simplicity, but you might need to adjust this.
+
+            const serviceLLMProvider = llmProviderSelect.value;
+            const serviceLLMModel = llmModelSelect.value;
+            const maxTokens = document.getElementById("max_tokens").value;
+            const temperature = temperatureSlider.value;
+            const repoURL = document.getElementById("repo_url").value; // we need to keep repoURL even for execute prompt.
+            const prompt = document.getElementById("prompt").value;
+
+            const queryParams = new URLSearchParams({
+                service_llm_provider: serviceLLMProvider,
+                service_llm_model: serviceLLMModel,
+                max_tokens: maxTokens,
+                temperature: temperature,
+                repo_url: repoURL, 
+                prompt: prompt,
+                timestamp: Date.now(),
+                execute_prompt: 'true' // Adding a flag to indicate prompt execution
+            });
+
+            pyvisOutput.src = `/generate?${queryParams.toString()}`;
+
+            pyvisOutput.addEventListener("load", () => {
+                loading.style.display = "none";
+            });
+        }
+
+        // Event listeners for the buttons
+        generateGraphButton.addEventListener("click", handleGraphGeneration);
+        executePromptButton.addEventListener("click", handlePromptExecution);
+    </script>
+</body>
+</html>

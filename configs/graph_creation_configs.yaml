@@ -1,0 +1,9 @@
+prompt_tmpl_path: configs/prompts.toml
+service_llm_provider: openai
+service_llm_model: gpt-4o-mini
+service_llm_gen_config_path: configs/graph_creation_gpt_gen_configs.yaml
+
+save_raw_graph: false
+save_nla_graph: true
+
+prompt: "how to modify security policy for HTTP request"

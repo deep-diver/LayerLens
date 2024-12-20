@@ -1,0 +1,6 @@
+max_tokens: 1024
+temperature: 0.1
+schema:
+  Relevance:
+    relevance: bool
+    reason: str
